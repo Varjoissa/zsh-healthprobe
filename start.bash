@@ -12,7 +12,7 @@ fi
 if [ ! -f "$path_config" ]; then
     mkdir -p $(dirname $path_config)
     cat <<EOF > $path_config
-output_file: /tmp/healthprobe/probes.output
+store_file: /tmp/healthprobe/probes.store
 polling_interval: 1
 probes:
     - name: TEST
@@ -22,22 +22,22 @@ fi
 
 # FUNCTIONS
 
-healthprobe_get_output() {
+healthprobe_get_store() {
     config=$1
-    local output_file="$(yq -r '.output_file' "$config" 2>/dev/null)"
-    echo $(cat $output_file 2>/dev/null)
+    local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
+    echo $(cat $store_file 2>/dev/null)
 }
-alias hpo="healthprobe_get_output $path_config"
+alias hpo="healthprobe_get_store $path_config"
 
 healthprobe_retrieve() {
     config=$1
     item=$2
-    local output_file="$(yq -r '.output_file' "$config" 2>/dev/null)"
-    ITEM_EXISTS=$(cat $output_file 2>/dev/null | grep " $item ")
+    local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
+    ITEM_EXISTS=$(cat $store_file 2>/dev/null | grep " $item ")
 
     if [ -n "$ITEM_EXISTS" ]; then
         echo "$item"
-        sed -i '' "/ $item /d" $output_file
+        sed -i '' "/ $item /d" $store_file
     fi
 
     return 0
@@ -50,7 +50,7 @@ healthprobe_stop() {
     if [ -f $healthprobe_pid ]; then
         kill -9 $(cat $healthprobe_pid)
         rm -f $healthprobe_pid
-        rm -f $(yq -r '.output_file' "$config" 2>/dev/null)
+        rm -f $(yq -r '.store_file' "$config" 2>/dev/null)
         echo "Healthprobe stopped..."
     fi
 }

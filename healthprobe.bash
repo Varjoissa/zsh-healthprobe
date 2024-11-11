@@ -13,15 +13,15 @@ elif [ -z "$(which yq)" ]; then
 fi
 
 # INIT
-path_output=$(yq -r '.output_file' "$path_config" 2>/dev/null)
+path_store=$(yq -r '.store_file' "$path_config" 2>/dev/null)
 
-if [ -z "$path_output" ]; then
-    path_output="/tmp/healthprobe/probes.output"
+if [ -z "$path_store" ]; then
+    path_store="/tmp/healthprobe/probes.store"
 fi
 
-if [ ! -f "$path_output" ]; then
-    mkdir -p $(dirname $path_output)
-    touch $path_output
+if [ ! -f "$path_store" ]; then
+    mkdir -p $(dirname $path_store)
+    touch $path_store
 fi
 
 HEALTHPROBE_TIME=0
@@ -35,6 +35,7 @@ while true; do
     for ((i=0; i<num_probes; i++)); do
         probe=$(yq -r ".probes[$i]" "$path_config" -o json)
         name=$(echo $probe | yq -r '.name')
+        action=$(echo $probe | yq -r '.action')
         interval=$(echo $probe | yq -r '.interval')
 
         if [ -z "$(eval echo \$HEALTHPROBE_$name)" ]; then
@@ -42,10 +43,15 @@ while true; do
         fi
 
         if [[ $((HEALTHPROBE_TIME-$(eval echo \$HEALTHPROBE_$name))) -ge $(($interval)) ]]; then
-            output=$(cat $path_output 2>/dev/null | grep $name)
-            if [ -z "$output" ]; then
-                echo " $name " >> $path_output
-            fi
+            
+            case $action in
+                store)
+                    source ./actions/store.sh
+                    ;;
+                *)
+                    ;;
+            esac
+
             eval "HEALTHPROBE_$name=$HEALTHPROBE_TIME"
         fi
     done
