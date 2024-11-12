@@ -3,11 +3,11 @@
 # CONFIG
 if [ -z "$1" ]; then
     export path_config="${HOME}/.config/healthprobe/config.yaml"
-    path_pid="${HOME}/.config/healthprobe/healthprobe.pid"
 else
     export path_config=$1
-    path_pid="$(dirname $path_config)/healthprobe.pid"
 fi
+
+export path_pid="/tmp/healthprobe/healthprobe.pid"
 
 if [ ! -f "$path_config" ]; then
     mkdir -p $(dirname $path_config)
@@ -24,6 +24,10 @@ fi
 
 healthprobe_get_store() {
     config=$1
+
+    [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+    [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
+
     local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
     echo $(cat $store_file 2>/dev/null)
 }
@@ -32,6 +36,11 @@ alias hpo="healthprobe_get_store $path_config"
 healthprobe_retrieve() {
     config=$1
     item=$2
+
+    [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+    [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
+    [ -z "$item" ] && echo "ERROR: Item not provided" >&2 && return 1
+
     local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
     ITEM_EXISTS=$(cat $store_file 2>/dev/null | grep " $item ")
 
@@ -44,9 +53,33 @@ healthprobe_retrieve() {
 }
 alias hpr="healthprobe_retrieve $path_config"
 
+healthprobe_running() {
+    pid_file=$1
+
+    [ -z "$pid_file" ] && echo "false"
+    [ ! -f "$pid_file" ] && echo "false"
+
+    local pid=$(cat $pid_file)
+    local pid_exists=$(ps -p $pid | grep "healthprobe.bash")
+
+    if [ -n "$pid_exists" ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
+    return 0
+}
+alias hpru="healthprobe_running $path_pid"
+
 healthprobe_stop() {
     healthprobe_pid=$1
     config=$2
+
+    [ -z "$healthprobe_pid" ] && echo "ERROR: PID file not provided" >&2 && return 1
+    [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+    [ ! -f "$healthprobe_pid" ] && echo "ERROR: PID file not found" >&2 && return 1
+    [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
+
     if [ -f $healthprobe_pid ]; then
         kill -9 $(cat $healthprobe_pid)
         rm -f $healthprobe_pid
@@ -57,6 +90,13 @@ healthprobe_stop() {
 alias hps="healthprobe_stop $path_pid $path_config"
 
 healthprobe_start() {
+    path_config=$1
+    path_pid=$2
+
+    [ -z "$path_config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+    [ ! -f "$path_config" ] && echo "ERROR: Config file not found" >&2 && return 1
+    [ -z "$path_pid" ] && echo "ERROR: PID file not provided" >&2 && return 1
+    
     bash ./healthprobe.bash $path_config &
     HEALTHPROBE_PID=$!
     echo $HEALTHPROBE_PID > $path_pid
@@ -76,7 +116,7 @@ if [ -n "$HEALTHPROBE_PID_EXISTS" ]; then
     echo "Healthprobe already running..."
 else
     rm -f $path_pid
-    healthprobe_start
+    healthprobe_start $path_config $path_pid
 fi
 
 unset path_config
