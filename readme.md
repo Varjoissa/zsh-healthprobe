@@ -3,6 +3,8 @@
 This is a simple background process that polls configured health probes and takes the required action.
 Additionally, it can be used as a `spaceship` plugin to add the status of a health probe to the spaceship prompt.
 
+[Click here for the spaceship plugin documentation](https://github.com/spaceship-prompt/spaceship-prompt)
+
 ---
 
 ## Installation
