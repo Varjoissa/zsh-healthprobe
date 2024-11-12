@@ -128,7 +128,3 @@ Since the healthprobe background process is detached, the trigger will appear in
 ```bash
 hpack <PROBE_NAME>
 ```
-
-
-## Usage
-
