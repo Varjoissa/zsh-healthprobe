@@ -24,6 +24,10 @@ probes:
 EOF
 fi
 
+if [ ! -d $(dirname $path_pid) ]; then
+    mkdir -p $(dirname $path_pid)
+fi
+
 # FUNCTIONS
 
 healthprobe_check_item() {
