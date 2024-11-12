@@ -76,7 +76,7 @@ while true; do
     done
     
     # SLEEP
-    polling_interval=$(yq -r '.polling_interval' "$path_config")
+    polling_interval=$(yq -r '.polling_interval' "$path_config" 2>/dev/null)
     if [ $polling_interval -gt 0 ]; then
         sleep $polling_interval
         HEALTHPROBE_TIME=$((HEALTHPROBE_TIME+polling_interval))
