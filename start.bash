@@ -26,6 +26,7 @@ fi
 
 if [ ! -d $(dirname $path_pid) ]; then
     mkdir -p $(dirname $path_pid)
+    touch $path_pid
 fi
 
 # FUNCTIONS
