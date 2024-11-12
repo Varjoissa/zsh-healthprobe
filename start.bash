@@ -13,14 +13,36 @@ if [ ! -f "$path_config" ]; then
     mkdir -p $(dirname $path_config)
     cat <<EOF > $path_config
 store_file: /tmp/healthprobe/probes.store
+
 polling_interval: 1
+
 probes:
     - name: TEST
       interval: 10
+      action: store
+      reset_if: retrieved
 EOF
 fi
 
 # FUNCTIONS
+
+healthprobe_check_item() {
+    config=$1
+    item=$2
+
+    [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+    [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
+    [ -z "$item" ] && echo "ERROR: Item not provided" >&2 && return 1
+
+    local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
+    ITEM_EXISTS=$(cat $store_file 2>/dev/null | grep " $item ")
+
+    if [ -n "$ITEM_EXISTS" ]; then
+        echo "$item"
+    fi
+
+    return 0
+}
 
 healthprobe_get_store() {
     config=$1
@@ -31,7 +53,6 @@ healthprobe_get_store() {
     local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
     echo $(cat $store_file 2>/dev/null)
 }
-alias hpo="healthprobe_get_store $path_config"
 
 healthprobe_retrieve() {
     config=$1
@@ -51,7 +72,7 @@ healthprobe_retrieve() {
 
     return 0
 }
-alias hpr="healthprobe_retrieve $path_config"
+alias hpack="healthprobe_retrieve $path_config"
 
 healthprobe_running() {
     pid_file=$1
@@ -69,7 +90,6 @@ healthprobe_running() {
     fi
     return 0
 }
-alias hpru="healthprobe_running $path_pid"
 
 healthprobe_stop() {
     healthprobe_pid=$1
@@ -87,7 +107,7 @@ healthprobe_stop() {
         echo "Healthprobe stopped..."
     fi
 }
-alias hps="healthprobe_stop $path_pid $path_config"
+alias hpstop="healthprobe_stop $path_pid $path_config"
 
 healthprobe_start() {
     path_config=$1

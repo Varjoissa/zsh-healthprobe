@@ -35,8 +35,9 @@ while true; do
     for ((i=0; i<num_probes; i++)); do
         probe=$(yq -r ".probes[$i]" "$path_config" -o json)
         name=$(echo $probe | yq -r '.name')
-        action=$(echo $probe | yq -r '.action')
         interval=$(echo $probe | yq -r '.interval')
+        action=$(echo $probe | yq -r '.action')
+        reset_if=$(echo $probe | yq -r '.reset_if' 2>/dev/null)
 
         if [ -z "$(eval echo \$HEALTHPROBE_$name)" ]; then
             eval "HEALTHPROBE_$name=0"
@@ -53,7 +54,25 @@ while true; do
             esac
 
             eval "HEALTHPROBE_$name=$HEALTHPROBE_TIME"
+        else
+
+            case $action in
+                store)
+                    case $reset_if in
+                        retrieved)
+                            if [[ $(cat $path_store 2>/dev/null | grep $name) ]]; then
+                                eval "HEALTHPROBE_$name=$HEALTHPROBE_TIME"
+                            fi
+                            ;;
+                        *)
+                            ;;
+                    esac
+                    ;;
+                *)
+                    ;;
+            esac
         fi
+
     done
     
     # SLEEP

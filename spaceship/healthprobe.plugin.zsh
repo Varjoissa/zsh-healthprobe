@@ -12,51 +12,56 @@ SPACESHIP_HEALTHPROBE_SHOW="${SPACESHIP_HEALTHPROBE_SHOW=true}"
 SPACESHIP_HEALTHPROBE_ASYNC="${SPACESHIP_HEALTHPROBE_ASYNC=true}"
 SPACESHIP_HEALTHPROBE_PREFIX="${SPACESHIP_HEALTHPROBE_PREFIX="$SPACESHIP_PROMPT_DEFAULT_PREFIX"}"
 SPACESHIP_HEALTHPROBE_SUFFIX="${SPACESHIP_HEALTHPROBE_SUFFIX="$SPACESHIP_PROMPT_DEFAULT_SUFFIX"}"
-SPACESHIP_HEALTHPROBE_SYMBOL="${SPACESHIP_HEALTHPROBE_SYMBOL="😍 "}"
+SPACESHIP_HEALTHPROBE_SYMBOL="${SPACESHIP_HEALTHPROBE_SYMBOL="🔴 "}"
 SPACESHIP_HEALTHPROBE_COLOR="${SPACESHIP_HEALTHPROBE_COLOR="red"}"
-SPACESHIP_HEALTHPROBE_CONFIG_PATH="${SPACESHIP_HEALTHPROBE_CONFIG="${HOME}/.config/healthprobe/config.yaml"}"
-SPACESHIP_HEALTHPROBE_PID_PATH="${SPACESHIP_HEALTHPROBE_PID="/tmp/healthprobe/healthprobe.pid"}"
+SPACESHIP_HEALTHPROBE_CONFIG_PATH="${SPACESHIP_HEALTHPROBE_CONFIG_PATH="${HOME}/.config/healthprobe/config.yaml"}"
+SPACESHIP_HEALTHPROBE_PID_PATH="${SPACESHIP_HEALTHPROBE_PID_PATH="/tmp/healthprobe/healthprobe.pid"}"
 SPACESHIP_HEALTHPROBE_RETRIEVE="${SPACESHIP_HEALTHPROBE_RETRIEVE=""}"
 
 # ------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------
 
-healthprobe_running() {
-    pid_file=$1
+# Uncomment the following functions only if you are running this script
+# in a different shell context as the healthprobe start.bash script.
+# When sourcing both scripts in the same shell context, the functions
+# will be already available.
 
-    [ -z "$pid_file" ] && echo "false" && return 0
-    [ ! -f "$pid_file" ] && echo "false" && return 0
+# healthprobe_running() {
+#     pid_file=$1
 
-    local pid=$(cat $pid_file)
-    local pid_exists=$(ps -p $pid | grep "healthprobe.bash")
+#     [ -z "$pid_file" ] && echo "false" && return 0
+#     [ ! -f "$pid_file" ] && echo "false" && return 0
 
-    if [ -n "$pid_exists" ]; then
-        echo "true"
-    else
-        echo "false"
-    fi
-    return 0
-}
+#     local pid=$(cat $pid_file)
+#     local pid_exists=$(ps -p $pid | grep "healthprobe.bash")
 
-healthprobe_retrieve() {
-    config=$1
-    item=$2
+#     if [ -n "$pid_exists" ]; then
+#         echo "true"
+#     else
+#         echo "false"
+#     fi
+#     return 0
+# }
 
-    [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
-    [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
-    [ -z "$item" ] && echo "ERROR: Item not provided" >&2 && return 1
+# healthprobe_retrieve() {
+#     config=$1
+#     item=$2
 
-    local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
-    ITEM_EXISTS=$(cat $store_file 2>/dev/null | grep " $item ")
+#     [ -z "$config" ] && echo "ERROR: Config file not provided" >&2 && return 1
+#     [ ! -f "$config" ] && echo "ERROR: Config file not found" >&2 && return 1
+#     [ -z "$item" ] && echo "ERROR: Item not provided" >&2 && return 1
 
-    if [ -n "$ITEM_EXISTS" ]; then
-        echo "$item"
-        sed -i '' "/ $item /d" $store_file
-    fi
+#     local store_file="$(yq -r '.store_file' "$config" 2>/dev/null)"
+#     ITEM_EXISTS=$(cat $store_file 2>/dev/null | grep " $item ")
 
-    return 0
-}
+#     if [ -n "$ITEM_EXISTS" ]; then
+#         echo "$item"
+#         sed -i '' "/ $item /d" $store_file
+#     fi
+
+#     return 0
+# }
 
 
 # ------------------------------------------------------------------------------
@@ -81,7 +86,7 @@ spaceship_healthprobe() {
     # Get all RETRIEVE items, which are seperated by space, comma or semicolon
     items=($(echo "$SPACESHIP_HEALTHPROBE_RETRIEVE" | tr ' ,;' '\n'))
     for item in "${items[@]}"; do
-        retrieved_item=$(healthprobe_retrieve "$SPACESHIP_HEALTHPROBE_CONFIG_PATH" "$item")
+        retrieved_item=$(healthprobe_check_item "$SPACESHIP_HEALTHPROBE_CONFIG_PATH" "$item")
         [[ -z "$retrieved_item" ]] && continue
         healthprobe_block+="$retrieved_item "
     done
