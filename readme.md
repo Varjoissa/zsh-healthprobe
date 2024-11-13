@@ -50,7 +50,7 @@ If you wont specify the config file, the default one will be used.
 4. Restart your shell or run the script manually.
 
 ```bash
-exec zsh -l'
+exec zsh -l
 ```
 
 5. Optionally: Continue with the spaceship plugin installation.
@@ -117,7 +117,7 @@ SPACESHIP_HEALTHPROBE_PID_PATH="/tmp/healthprobe/healthprobe.pid"
 6. Restart your shell or run the script manually.
 
 ```bash
-exec zsh -l'
+exec zsh -l
 ```
 
 7. Use the plugin.

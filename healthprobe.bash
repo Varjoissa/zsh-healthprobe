@@ -1,13 +1,21 @@
 #!/bin/bash
-
-path_config=$1
+path_dirname=$1
+path_config=$2
 
 # VALIDATION
+if [ ! -d "$path_dirname" ]; then
+    echo "ERROR: Directory not found" >&2
+    echo "Usage: healthprobe path_dirname path_config" >&2
+    exit 1
+fi
+
 if [ ! -f "$path_config" ]; then
     echo "ERROR: Config file not found" >&2
-    echo "Usage: healthprobe path_config" >&2
+    echo "Usage: healthprobe path_dirname path_config" >&2
     exit 1
-elif [ -z "$(which yq)" ]; then
+fi
+
+if [ -z "$(which yq)" ]; then
     echo "ERROR: 'yq' is not installed" >&2
     exit 1
 fi
@@ -47,7 +55,7 @@ while true; do
             
             case $action in
                 store)
-                    source ./actions/store.sh
+                    source $path_dirname/actions/store.sh
                     ;;
                 *)
                     ;;

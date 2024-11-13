@@ -8,6 +8,7 @@ else
 fi
 
 export path_pid="/tmp/healthprobe/healthprobe.pid"
+export path_dirname=$(dirname $(realpath $0))
 
 if [ ! -f "$path_config" ]; then
     mkdir -p $(dirname $path_config)
@@ -80,10 +81,11 @@ alias hpack="healthprobe_retrieve $path_config"
 healthprobe_running() {
     pid_file=$1
 
-    [ -z "$pid_file" ] && echo "false"
-    [ ! -f "$pid_file" ] && echo "false"
+    [ -z "$pid_file" ] && echo "false" && return 1
+    [ ! -f "$pid_file" ] && echo "false" && return 1
 
     local pid=$(cat $pid_file)
+    [ -z "$pid" ] && echo "false" && return 1
     local pid_exists=$(ps -p $pid | grep "healthprobe.bash")
 
     if [ -n "$pid_exists" ]; then
@@ -95,17 +97,20 @@ healthprobe_running() {
 }
 
 healthprobe_start() {
-    path_config=$1
-    path_pid=$2
+    path_healthprobe=$1
+    path_config=$2
+    path_pid=$3
 
+    [ -z "$path_healthprobe" ] && echo "ERROR: Healthprobe file not provided" >&2 && return 1
+    [ ! -f "$path_healthprobe" ] && echo "ERROR: Healthprobe file not found" >&2 && return 1
     [ -z "$path_config" ] && echo "ERROR: Config file not provided" >&2 && return 1
     [ ! -f "$path_config" ] && echo "ERROR: Config file not found" >&2 && return 1
     [ -z "$path_pid" ] && echo "ERROR: PID file not provided" >&2 && return 1
     
-    bash ./healthprobe.bash $path_config &
+    nohup bash $path_healthprobe $path_config &
     HEALTHPROBE_PID=$!
     echo $HEALTHPROBE_PID > $path_pid
-    echo "Healthprobe started..."
+    echo "Healthprobe started ($HEALTHPROBE_PID) ..."
 }
 
 healthprobe_stop() {
@@ -134,8 +139,9 @@ if [[ $(healthprobe_running $path_pid) == "true" ]]; then
     echo "Healthprobe already running..."
 else
     rm -f $path_pid
-    healthprobe_start $path_config $path_pid
+    healthprobe_start $path_dirname/healthprobe.bash $path_config $path_pid
 fi
 
 unset path_config
 unset path_pid
+unset path_dirname
