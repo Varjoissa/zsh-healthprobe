@@ -107,7 +107,7 @@ healthprobe_start() {
     [ ! -f "$path_config" ] && echo "ERROR: Config file not found" >&2 && return 1
     [ -z "$path_pid" ] && echo "ERROR: PID file not provided" >&2 && return 1
     
-    nohup bash $path_healthprobe $path_config &
+    nohup bash $path_healthprobe $path_config > /dev/null 2>&1 &
     HEALTHPROBE_PID=$!
     echo $HEALTHPROBE_PID > $path_pid
     echo "Healthprobe started ($HEALTHPROBE_PID) ..."
